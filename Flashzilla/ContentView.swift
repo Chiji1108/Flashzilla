@@ -8,19 +8,14 @@
 import SwiftUI
 
 struct ContentView: View {
-    @Environment(\.scenePhase) var scenePhase
+    @Environment(\.accessibilityReduceTransparency) var reduceTransparency
 
     var body: some View {
-        Text("Hello, world!")
-            .onChange(of: scenePhase) { oldPhase, newPhase in
-                if newPhase == .active {
-                    print("Active")
-                } else if newPhase == .inactive {
-                    print("Inactive")
-                } else if newPhase == .background {
-                    print("Background")
-                }
-            }
+        Text("Hello, World!")
+            .padding()
+            .background(reduceTransparency ? .black : .black.opacity(0.5))
+            .foregroundStyle(.white)
+            .clipShape(.capsule)
     }
 }
 
