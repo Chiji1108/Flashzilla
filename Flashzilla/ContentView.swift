@@ -11,12 +11,14 @@ struct ContentView: View {
     @Environment(\.accessibilityDifferentiateWithoutColor)
     var accessibilityDifferentiateWithoutColor
     @Environment(\.accessibilityVoiceOverEnabled) var accessibilityVoiceOverEnabled
-    @State private var cards = [Card](repeating: .example, count: 10)
+    @State private var cards = [Card]()
     @State private var timeRemaining = 100
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     @Environment(\.scenePhase) var scenePhase
     @State private var isActive = true
+
+    @State private var showingEditScreen = false
 
     func removeCard(at index: Int) {
         guard index >= 0 else { return }
@@ -29,9 +31,17 @@ struct ContentView: View {
     }
 
     func resetCards() {
-        cards = [Card](repeating: .example, count: 10)
         timeRemaining = 100
         isActive = true
+        loadData()
+    }
+
+    func loadData() {
+        if let data = UserDefaults.standard.data(forKey: "Cards") {
+            if let decoded = try? JSONDecoder().decode([Card].self, from: data) {
+                cards = decoded
+            }
+        }
     }
 
     var body: some View {
@@ -70,6 +80,26 @@ struct ContentView: View {
                         .clipShape(.capsule)
                 }
             }
+
+            VStack {
+                HStack {
+                    Spacer()
+
+                    Button {
+                        showingEditScreen = true
+                    } label: {
+                        Image(systemName: "plus.circle")
+                            .padding()
+                            .background(.black.opacity(0.7))
+                            .clipShape(.circle)
+                    }
+                }
+
+                Spacer()
+            }
+            .foregroundStyle(.white)
+            .font(.largeTitle)
+            .padding()
 
             if accessibilityDifferentiateWithoutColor || accessibilityVoiceOverEnabled {
                 VStack {
@@ -126,6 +156,10 @@ struct ContentView: View {
                 isActive = false
             }
         }
+        .sheet(isPresented: $showingEditScreen, onDismiss: resetCards) {
+            EditCards()
+        }
+        .onAppear(perform: resetCards)
     }
 }
 
