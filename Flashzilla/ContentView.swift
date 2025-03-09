@@ -20,10 +20,17 @@ struct ContentView: View {
 
     @State private var showingEditScreen = false
 
-    func removeCard(at index: Int) {
+    func removeCard(at index: Int, isCorrect: Bool) {
         guard index >= 0 else { return }
 
-        cards.remove(at: index)
+        let card = cards.remove(at: index)
+
+        // 不正解の場合は、カードを配列の最後に戻す
+        if !isCorrect {
+            withAnimation {
+                cards.insert(card, at: 0)
+            }
+        }
 
         if cards.isEmpty {
             isActive = false
@@ -59,15 +66,18 @@ struct ContentView: View {
                     .clipShape(.capsule)
 
                 ZStack {
-                    ForEach(0..<cards.count, id: \.self) { index in
-                        CardView(card: cards[index]) {
+                    ForEach(cards) { card in
+                        CardView(card: card) { isCorrect in
                             withAnimation {
-                                removeCard(at: index)
+                                let index = cards.firstIndex(where: { $0.id == card.id }) ?? 0
+                                removeCard(at: index, isCorrect: isCorrect)
                             }
                         }
-                        .stacked(at: index, in: cards.count)
-                        .allowsHitTesting(index == cards.count - 1)
-                        .accessibilityHidden(index < cards.count - 1)
+                        .stacked(
+                            at: cards.firstIndex(where: { $0.id == card.id }) ?? 0, in: cards.count
+                        )
+                        .allowsHitTesting(cards.last?.id == card.id)
+                        .accessibilityHidden(cards.last?.id != card.id)
                     }
                 }
                 .allowsHitTesting(timeRemaining > 0)
@@ -108,7 +118,7 @@ struct ContentView: View {
                     HStack {
                         Button {
                             withAnimation {
-                                removeCard(at: cards.count - 1)
+                                removeCard(at: cards.count - 1, isCorrect: false)
                             }
                         } label: {
                             Image(systemName: "xmark.circle")
@@ -123,7 +133,7 @@ struct ContentView: View {
 
                         Button {
                             withAnimation {
-                                removeCard(at: cards.count - 1)
+                                removeCard(at: cards.count - 1, isCorrect: true)
                             }
                         } label: {
                             Image(systemName: "checkmark.circle")
